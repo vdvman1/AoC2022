@@ -1,2 +1,1 @@
-﻿global using AoCHelper;
-global using Spectre.Console;
+﻿global using BenchmarkDotNet.Attributes;

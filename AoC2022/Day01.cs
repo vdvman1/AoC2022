@@ -1,12 +1,13 @@
-﻿using System.Runtime.InteropServices;
+﻿namespace AoC2022;
 
-namespace AoC2022;
-
-public class Day01 : BaseDay
+public class Day01 : DayBase
 {
-    private readonly int[] ElfRationTotals;
+    private int[] ElfRationTotals = Array.Empty<int>();
 
-    public Day01()
+    public Day01() : base("01") { }
+
+    [Benchmark]
+    public override void LoadData()
     {
         var lines = File.ReadAllLines(InputFilePath);
         var totals = new List<int>();
@@ -27,26 +28,23 @@ public class Day01 : BaseDay
         ElfRationTotals = totals.ToArray();
     }
 
-    public override ValueTask<string> Solve_1()
+    [Benchmark]
+    public override string Solve1()
     {
         int maxCalories = 0;
-        var totals = ElfRationTotals.AsSpan();
-        for (int i = 0; i < totals.Length; i++)
+        foreach (int rations in ElfRationTotals)
         {
-            if (totals[i] > maxCalories)
-            {
-                maxCalories = totals[i];
-            }
+            maxCalories = Math.Max(maxCalories, rations);
         }
-        return new(maxCalories.ToString());
+
+        return maxCalories.ToString();
     }
 
-    public override ValueTask<string> Solve_2()
+    [Benchmark]
+    public override string Solve2()
     {
         const int count = 3;
-        Span<int> topThree = stackalloc int[count];
-        var totals = ElfRationTotals.AsSpan();
-        totals[..count].CopyTo(topThree);
+        var topThree = ElfRationTotals[..count];
         if (topThree[0] >= topThree[1])
         {
             // 0 >= 1
@@ -94,24 +92,31 @@ public class Day01 : BaseDay
             }
         }
 
-        totals = totals.Slice(count);
-        for (int i = 0; i < totals.Length; i++)
+        for (int i = count; i < ElfRationTotals.Length; i++)
         {
-            var total = totals[i];
-            for (int j = 0; j < count; j++)
+            var calories = ElfRationTotals[i];
+            if (calories > topThree[2])
             {
-                if (total < topThree[j]) continue;
-
-                for (int k = count - 1; k > j; k--)
+                if (calories > topThree[1])
                 {
-                    topThree[k] = topThree[k - 1];
+                    topThree[2] = topThree[1];
+                    if (calories > topThree[0])
+                    {
+                        topThree[1] = topThree[0];
+                        topThree[0] = calories;
+                    }
+                    else
+                    {
+                        topThree[1] = calories;
+                    }
                 }
-
-                topThree[j] = total;
-                break;
+                else
+                {
+                    topThree[2] = calories;
+                }
             }
         }
 
-        return new((topThree[0] + topThree[1] + topThree[2]).ToString());
+        return (topThree[0] + topThree[1] + topThree[2]).ToString();
     }
 }
