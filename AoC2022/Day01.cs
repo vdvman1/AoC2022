@@ -1,40 +1,117 @@
-﻿namespace AoC2022;
+﻿using System.Runtime.InteropServices;
+
+namespace AoC2022;
 
 public class Day01 : BaseDay
 {
-    private readonly List<List<int>> ElfRations = new();
+    private readonly int[] ElfRationTotals;
 
     public Day01()
     {
         var lines = File.ReadAllLines(InputFilePath);
-        var rations = new List<int>();
+        var totals = new List<int>();
+        var sum = 0;
         foreach (var line in lines)
         {
             if (line.Length == 0)
             {
-                ElfRations.Add(rations);
-                rations = new();
+                totals.Add(sum);
+                sum = 0;
             }
             else
             {
-                rations.Add(int.Parse(line));
+                sum += int.Parse(line);
             }
         }
-        ElfRations.Add(rations);
+        totals.Add(sum);
+        ElfRationTotals = totals.ToArray();
     }
 
     public override ValueTask<string> Solve_1()
     {
         int maxCalories = 0;
-        foreach (var rations in ElfRations)
+        var totals = ElfRationTotals.AsSpan();
+        for (int i = 0; i < totals.Length; i++)
         {
-            maxCalories = Math.Max(maxCalories, rations.Sum());
+            if (totals[i] > maxCalories)
+            {
+                maxCalories = totals[i];
+            }
         }
         return new(maxCalories.ToString());
     }
 
     public override ValueTask<string> Solve_2()
     {
-        throw new NotImplementedException();
+        const int count = 3;
+        Span<int> topThree = stackalloc int[count];
+        var totals = ElfRationTotals.AsSpan();
+        totals[..count].CopyTo(topThree);
+        if (topThree[0] >= topThree[1])
+        {
+            // 0 >= 1
+            if (topThree[1] >= topThree[2])
+            {
+                // 0 >= 1 >= 2
+                // Already sorted
+            }
+            else
+            {
+                // 2 > 1
+                if (topThree[0] >= topThree[2])
+                {
+                    // 0 >= 2 > 1
+                    (topThree[1], topThree[2]) = (topThree[2], topThree[1]);
+                }
+                else
+                {
+                    // 2 > 0 >= 1
+                    (topThree[0], topThree[1], topThree[2]) = (topThree[2], topThree[0], topThree[1]);
+                }
+            }
+        }
+        else
+        {
+            // 1 > 0
+            if (topThree[1] >= topThree[2])
+            {
+                // 1 >= 2
+                if (topThree[0] >= topThree[2])
+                {
+                    // 1 > 0 >= 2
+                    (topThree[0], topThree[1]) = (topThree[1], topThree[0]);
+                }
+                else
+                {
+                    // 1 >= 2 > 0
+                    (topThree[0], topThree[1], topThree[2]) = (topThree[1], topThree[2], topThree[0]);
+                }
+            }
+            else
+            {
+                // 2 > 1 > 0
+                (topThree[0], topThree[2]) = (topThree[2], topThree[0]);
+            }
+        }
+
+        totals = totals.Slice(count);
+        for (int i = 0; i < totals.Length; i++)
+        {
+            var total = totals[i];
+            for (int j = 0; j < count; j++)
+            {
+                if (total < topThree[j]) continue;
+
+                for (int k = count - 1; k > j; k--)
+                {
+                    topThree[k] = topThree[k - 1];
+                }
+
+                topThree[j] = total;
+                break;
+            }
+        }
+
+        return new((topThree[0] + topThree[1] + topThree[2]).ToString());
     }
 }
