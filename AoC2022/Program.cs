@@ -5,7 +5,12 @@ using BenchmarkDotNet.Running;
 using BenchmarkDotNet.Toolchains.InProcess.NoEmit;
 using System.Text;
 
-BenchmarkRunner.Run<Day01>(ManualConfig.CreateMinimumViable().AddJob(Job.MediumRun.WithToolchain(InProcessNoEmitToolchain.Instance)));
+BenchmarkRunner.Run<Day01>(ManualConfig.CreateMinimumViable()
+    .AddJob(Job
+        .MediumRun
+        .WithToolchain(InProcessNoEmitToolchain.Instance)
+    )
+);
 
 string part1 = "Part 1";
 string part2 = "Part 2";

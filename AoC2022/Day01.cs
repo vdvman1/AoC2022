@@ -7,24 +7,82 @@ public class Day01 : DayBase
     public Day01() : base("01") { }
 
     [Benchmark]
+    [MethodImpl(MethodImplOptions.AggressiveOptimization)]
     public override void LoadData()
     {
-        var lines = File.ReadAllLines(InputFilePath);
+        var chars = File.ReadAllBytes(InputFilePath);
         var totals = new List<int>();
-        var sum = 0;
-        foreach (var line in lines)
+        int total = 0;
+        int i = 0;
+        do
         {
-            if (line.Length == 0)
+            var charsVec = Unsafe.ReadUnaligned<int>(ref chars[i]);
+            const byte zero = (byte)'0';
+            const int zeroVec = zero | (zero << 8) | (zero << 16) | (zero << 24);
+            charsVec -= zeroVec;
+            ref byte digit = ref Unsafe.As<int, byte>(ref charsVec);
+            int value =
+                (10 * 10 * 10 * digit)
+                + (10 * 10 * Unsafe.Add(ref digit, 1))
+                + (10 * Unsafe.Add(ref digit, 2))
+                + Unsafe.Add(ref digit, 3);
+
+            if (i + 4 == chars.Length)
             {
-                totals.Add(sum);
-                sum = 0;
+                totals.Add(total + value);
+                break;
             }
-            else
+
+            if (chars[i + 4] == '\n')
             {
-                sum += int.Parse(line);
+                if (i + 5 == chars.Length)
+                {
+                    totals.Add(total + value);
+                    break;
+                }
+
+                if (chars[i + 5] == '\n')
+                {
+                    totals.Add(total + value);
+                    i += 6;
+                    total = 0;
+                    continue;
+                }
+
+                total += value;
+                i += 5;
+                continue;
             }
-        }
-        totals.Add(sum);
+
+            total += 10 * value + chars[i + 4] - '0';
+            if (i + 5 == chars.Length)
+            {
+                totals.Add(total);
+                break;
+            }
+
+            if (chars[i + 5] == '\n')
+            {
+                if (i + 6 == chars.Length)
+                {
+                    totals.Add(total);
+                    break;
+                }
+
+                if (chars[i + 6] == '\n')
+                {
+                    totals.Add(total);
+                    total = 0;
+                    i += 7;
+                    continue;
+                }
+
+                i += 6;
+                continue;
+            }
+
+            i += 5;
+        } while (i < chars.Length);
         ElfRationTotals = totals.ToArray();
     }
 
