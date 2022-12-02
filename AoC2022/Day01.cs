@@ -7,7 +7,6 @@ public class Day01 : DayBase
     public Day01() : base("01") { }
 
     [Benchmark]
-    [MethodImpl(MethodImplOptions.AggressiveOptimization)]
     public override void LoadData()
     {
         var chars = File.ReadAllBytes(InputFilePath);
