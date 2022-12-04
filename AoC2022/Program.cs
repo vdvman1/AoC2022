@@ -5,10 +5,10 @@ using BenchmarkDotNet.Running;
 using BenchmarkDotNet.Toolchains.InProcess.NoEmit;
 using System.Text;
 
-const bool benchmark = true;
+const bool benchmark = false;
 if (benchmark)
 {
-    BenchmarkRunner.Run<Day02>(ManualConfig.CreateMinimumViable()
+    BenchmarkRunner.Run<Day03>(ManualConfig.CreateMinimumViable()
         .AddJob(Job
             .MediumRun
             .WithToolchain(InProcessNoEmitToolchain.Instance)
