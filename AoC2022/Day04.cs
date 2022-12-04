@@ -4,14 +4,13 @@ public class Day04 : DayBase
 {
     public Day04() : base("04") { }
 
-    private record struct Range(int Start, int End);
-    private (Range A, Range B)[] Ranges = null!;
+    private (byte StartA, byte EndA, byte StartB, byte EndB)[] Ranges = null!;
 
     [Benchmark]
     public override void ParseData()
     {
         var chars = Contents;
-        var ranges = new List<(Range A, Range B)>();
+        var ranges = new List<(byte StartA, byte EndA, byte StartB, byte EndB)>();
         int i = 0;
         while (i < chars.Length)
         {
@@ -59,20 +58,21 @@ public class Day04 : DayBase
                 i += 3;
             }
 
-            ranges.Add((new(startA, endA), (new(startB, endB))));
+            if (startB <= startA)
+            {
+                ranges.Add((
+                    (byte)startB, (byte)endB,
+                    (byte)startA, (byte)endA
+                ));
+            }
+            else
+            {
+                ranges.Add((
+                    (byte)startA, (byte)endA,
+                    (byte)startB, (byte)endB
+                ));
+            }
         }
-
-        //var lines = File.ReadAllLines(InputFilePath);
-        //var ranges = new List<(Range A, Range B)>(lines.Length);
-
-        //foreach (var line in lines)
-        //{
-        //    var parts = line.Split('-', ',');
-        //    ranges.Add((
-        //        new(int.Parse(parts[0]), int.Parse(parts[1])),
-        //        new(int.Parse(parts[2]), int.Parse(parts[3]))
-        //    ));
-        //}
 
         Ranges = ranges.ToArray();
     }
@@ -82,25 +82,13 @@ public class Day04 : DayBase
     {
         int count = 0;
 
-        foreach (var (a, b) in Ranges)
+        var ranges = Ranges;
+        for (int i = 0; i < ranges.Length; i++)
         {
-            if (a.Start == b.Start || a.End == b.End)
+            var (startA, endA, startB, endB) = ranges[i];
+            if (startA == startB || endB <= endA)
             {
                 ++count;
-            }
-            else if (a.Start < b.Start)
-            {
-                if (b.End < a.End)
-                {
-                    ++count;
-                }
-            }
-            else // b.Start < a.Start
-            {
-                if (a.End < b.End)
-                {
-                    ++count;
-                }
             }
         }
 
@@ -112,21 +100,13 @@ public class Day04 : DayBase
     {
         int count = 0;
 
-        foreach (var (a, b) in Ranges)
+        var ranges = Ranges;
+        for (int i = 0; i < ranges.Length; i++)
         {
-            if (a.Start <= b.Start)
+            var (_, endA, startB, _) = ranges[i];
+            if (startB <= endA)
             {
-                if (b.Start <= a.End)
-                {
-                    ++count;
-                }
-            }
-            else // b.Start < a.Start
-            {
-                if (a.Start <= b.End)
-                {
-                    ++count;
-                }
+                ++count;
             }
         }
 
