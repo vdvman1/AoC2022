@@ -4,87 +4,68 @@ public class Day02 : DayBase
 {
     public Day02() : base("02") { }
 
-    const int DrawPoints = 3;
-    const int WinPoints = 6;
+    const byte DrawPoints = 3;
+    const byte WinPoints = 6;
 
-    private enum ThrowChoice : byte
-    {
-        Rock = 0,
-        Paper = 1,
-        Scissors = 2
-    }
+    const int Rock = 0b00;     // 0
+    const int Paper = 0b01;    // 1
+    const int Scissors = 0b10; // 2
+    // Unused: 0b11
 
-    private enum Response : byte
-    {
-        Rock = 0,
-        Lose = Rock,
-        Paper = 1,
-        Draw = Paper,
-        Scissors = 2,
-        Win = Scissors
-    }
+    const int Lose = 0;
+    const int Draw = 1;
+    const int Win = 2;
 
-    private record struct Row(ThrowChoice Opponent, Response Response);
-
-    private Row[] Rows = null!;
+    private byte[] Rows = null!;
 
     [Benchmark]
     public override void LoadData()
     {
-        var lines = File.ReadAllLines(InputFilePath);
-        var rows = new List<Row>(lines.Length);
-        foreach (var line in lines)
+        var chars = File.ReadAllBytes(InputFilePath);
+        var rows = new List<byte>();
+        for (int i = 0; i < chars.Length; i += 4)
         {
-            var opponent = line[0] - 'A';
-            var response = line[2] - 'X';
-            rows.Add(new((ThrowChoice)opponent, (Response)response));
+            var opponent = chars[i] - 'A';
+            var response = chars[i + 2] - 'X';
+
+            rows.Add((byte)(opponent << 2 | response));
         }
+
         Rows = rows.ToArray();
     }
 
     [Benchmark]
     public override string Solve1()
     {
-        int score = 0;
-        foreach (var (opponent, response) in Rows)
+        ReadOnlySpan<byte> PointsLookup = new byte[]
         {
-            score += (byte)response + 1;
-            switch (opponent)
-            {
-                case ThrowChoice.Rock:
-                    switch (response)
-                    {
-                        case Response.Rock:
-                            score += DrawPoints;
-                            break;
-                        case Response.Paper:
-                            score += WinPoints;
-                            break;
-                    }
-                    break;
-                case ThrowChoice.Paper:
-                    switch (response)
-                    {
-                        case Response.Paper:
-                            score += DrawPoints;
-                            break;
-                        case Response.Scissors:
-                            score += WinPoints;
-                            break;
-                    }
-                    break;
-                case ThrowChoice.Scissors:
-                    switch (response)
-                    {
-                        case Response.Rock:
-                            score += WinPoints;
-                            break;
-                        case Response.Scissors:
-                            score += DrawPoints;
-                            break;
-                    }
-                    break;
-            }
+                                                                //                  opponent - response =  0 -> 3   + 3 =  3   * 3 =  9     % 5 = 4
+                                                                //                  opponent - response = -1 -> 6   + 3 =  2   * 3 =  6     % 5 = 1
+                                                                //                  opponent - response = -2 -> 0   + 3 =  1   * 3 =  3     % 5 = 3
+                                                                //                  opponent - response =  1 -> 0   + 3 =  4   * 3 = 12     % 5 = 2
+                                                                //                  opponent - response =  2 -> 6   + 3 =  5   * 3 = 15     % 5 = 0
+
+            /* Rock    , Rock     */ DrawPoints + Rock + 1,     // 3 + 0 + 1 = 4    opponent - response = 0 - 0 =  0
+            /* Rock    , Paper    */ WinPoints + Paper + 1,     // 6 + 1 + 1 = 8    opponent - response = 0 - 1 = -1
+            /* Rock    , Scissors */ 0 + Scissors + 1,          //     2 + 1 = 3    opponent - response = 0 - 2 = -2
+            /* Rock    , Unused   */ 0,
+            /* Paper   , Rock     */ 0 + Rock + 1,              //     0 + 1 = 1    opponent - response = 1 - 0 =  1
+            /* Paper   , Paper    */ DrawPoints + Paper + 1,    // 3 + 1 + 1 = 5    opponent - response = 1 - 1 =  0
+            /* Paper   , Scissors */ WinPoints + Scissors + 1,  // 6 + 2 + 1 = 9    opponent - response = 1 - 2 = -1
+            /* Paper   , Unused   */ 0,
+            /* Scissors, Rock     */ WinPoints + Rock + 1,      // 6 + 0 + 1 = 7    opponent - response = 2 - 0 =  2
+            /* Scissors, Paper    */ 0 + Paper + 1,             //     1 + 1 = 2    opponent - response = 2 - 1 =  1
+            /* Scissors, Scissors */ DrawPoints + Scissors + 1, // 3 + 2 + 1 = 6    opponent - response = 2 - 2 =  0
+            /* Scissors, Unused   */ 0,
+        };
+
+        int score = 0;
+        var rowArray = Rows;
+        ref var rows = ref MemoryMarshal.GetArrayDataReference(rowArray);
+        for (int i = 0; i < rowArray.Length; ++i)
+        {
+            var row = Unsafe.Add(ref rows, i);
+            score += PointsLookup[row];
         }
         return score.ToString();
     }
@@ -92,56 +73,30 @@ public class Day02 : DayBase
     [Benchmark]
     public override string Solve2()
     {
-        int score = 0;
-        foreach (var (opponent, response) in Rows)
+        ReadOnlySpan<byte> PointsLookup = new byte[]
         {
-            switch (opponent)
-            {
-                case ThrowChoice.Rock:
-                    switch (response)
-                    {
-                        case Response.Lose:
-                            score += (byte)ThrowChoice.Scissors + 1;
-                            break;
-                        case Response.Draw:
-                            score += DrawPoints + (byte)ThrowChoice.Rock + 1;
-                            break;
-                        case Response.Win:
-                            score += WinPoints + (byte)ThrowChoice.Paper + 1;
-                            break;
-                    }
-                    break;
-                case ThrowChoice.Paper:
-                    switch (response)
-                    {
-                        case Response.Lose:
-                            score += (byte)ThrowChoice.Rock + 1;
-                            break;
-                        case Response.Draw:
-                            score += DrawPoints + (byte)ThrowChoice.Paper + 1;
-                            break;
-                        case Response.Win:
-                            score += WinPoints + (byte)ThrowChoice.Scissors + 1;
-                            break;
-                    }
-                    break;
-                case ThrowChoice.Scissors:
-                    switch (response)
-                    {
-                        case Response.Lose:
-                            score += (byte)ThrowChoice.Paper + 1;
-                            break;
-                        case Response.Draw:
-                            score += DrawPoints + (byte)ThrowChoice.Scissors + 1;
-                            break;
-                        case Response.Win:
-                            score += WinPoints + (byte)ThrowChoice.Rock + 1;
-                            break;
-                    }
-                    break;
-            }
-        }
+            /* Rock    , Lose   */ 0 + Scissors + 1,
+            /* Rock    , Draw   */ DrawPoints + Rock + 1,
+            /* Rock    , Win    */ WinPoints + Paper + 1,
+            /* Rock    , Unused */ 0,
+            /* Paper   , Lose   */ 0 + Rock + 1,
+            /* Paper   , Draw   */ DrawPoints + Paper + 1,
+            /* Paper   , Win    */ WinPoints + Scissors + 1,
+            /* Paper   , Unused */ 0,
+            /* Scissors, Lose   */ 0 + Paper + 1,
+            /* Scissors, Draw   */ DrawPoints + Scissors + 1,
+            /* Scissors, Win    */ WinPoints + Rock + 1,
+            /* Scissors, Unused */ 0,
+        };
 
+        int score = 0;
+        var rowArray = Rows;
+        ref var rows = ref MemoryMarshal.GetArrayDataReference(rowArray);
+        for (int i = 0; i < rowArray.Length; ++i)
+        {
+            var row = Unsafe.Add(ref rows, i);
+            score += PointsLookup[row];
+        }
         return score.ToString();
     }
 }
