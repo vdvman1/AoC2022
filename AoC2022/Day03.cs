@@ -4,23 +4,85 @@ public class Day03 : DayBase
 {
     public Day03() : base("03") { }
 
-    private byte[][] Sacks = null!;
+    private (ulong CompartmentA, ulong CompartmentB)[] Sacks = null!;
 
     [Benchmark]
     public override void LoadData()
     {
-        var lines = File.ReadAllLines(InputFilePath);
-        var sacks = new List<byte[]>(lines.Length);
-        foreach (var line in lines)
+        var chars = File.ReadAllBytes(InputFilePath);
+        var sacks = new List<(ulong CompartmentA, ulong CompartmentB)>();
+
+        // My input file contains between 16 and 16+32 characters, and Vector256<byte>.Count == 32
+        int vecEnd = chars.Length - Vector256<byte>.Count - 16;
+        int i = 0;
+        while (i <= vecEnd)
         {
-            var sack = new byte[line.Length];
-            for (int i = 0; i < line.Length; i++)
+            int end = i + 16;
+            var charVec = Vector256.LoadUnsafe(ref chars[end]);
+            var isNewlineVec = Vector256.Equals(charVec, Vector256.Create((byte)'\n'));
+            var isNewlineBits = isNewlineVec.ExtractMostSignificantBits();
+            end += BitOperations.TrailingZeroCount(isNewlineBits);
+
+            int length = (end - i) >> 1;
+            ulong compartmentA = 0;
+
+            end = i + length;
+            while (i < end)
             {
-                var c = line[i];
-                sack[i] = (byte)(c > 'Z' ? c - 'a' + 1 : c - 'A' + 27);
+                var c = chars[i];
+                int index = (c > 'Z' ? c - 'a' : c - 'A' + 26);
+                compartmentA |= (1ul << index);
+                ++i;
             }
 
-            sacks.Add(sack);
+            ulong compartmentB = 0;
+            end = i + length;
+            while (i < end)
+            {
+                var c = chars[i];
+                int index = (c > 'Z' ? c - 'a' : c - 'A' + 26);
+                compartmentB |= (1ul << index);
+                ++i;
+            }
+
+            sacks.Add((compartmentA, compartmentB));
+            ++i;
+        }
+
+        // Attempting to use Vector128 made no difference to performance
+        
+        while (i < chars.Length)
+        {
+            int end = i + 16;
+            while (chars[end] != '\n')
+            {
+                ++end;
+            }
+
+            int length = (end - i) >> 1;
+            ulong compartmentA = 0;
+            ulong compartmentB = 0;
+
+            end = i + length;
+            while (i < end)
+            {
+                var c = chars[i];
+                int index = (c > 'Z' ? c - 'a' : c - 'A' + 26);
+                compartmentA |= (1ul << index);
+                ++i;
+            }
+
+            end = i + length;
+            while (i < end)
+            {
+                var c = chars[i];
+                int index = (c > 'Z' ? c - 'a' : c - 'A' + 26);
+                compartmentB |= (1ul << index);
+                ++i;
+            }
+
+            sacks.Add((compartmentA, compartmentB));
+            ++i;
         }
 
         Sacks = sacks.ToArray();
@@ -30,17 +92,11 @@ public class Day03 : DayBase
     public override string Solve1()
     {
         int sum = 0;
-        foreach (var sack in Sacks)
+        foreach (var (a, b) in Sacks)
         {
-            var length = sack.Length >> 1;
-            for (int i = 0; i < length; i++)
-            {
-                if (Array.IndexOf(sack, sack[i], length) >= 0)
-                {
-                    sum += sack[i];
-                    break;
-                }
-            }
+            var common = a & b;
+            int value = BitOperations.TrailingZeroCount(common);
+            sum += value + 1;
         }
 
         return sum.ToString();
@@ -53,10 +109,17 @@ public class Day03 : DayBase
 
         for (int i = 0; i < Sacks.Length; i += 3)
         {
-            var set = new HashSet<byte>(Sacks[i]);
-            set.IntersectWith(Sacks[i + 1]);
-            set.IntersectWith(Sacks[i + 2]);
-            sum += set.Single();
+            var (a, b) = Sacks[i];
+            var set = a | b;
+
+            (a, b) = Sacks[i + 1];
+            set &= a | b;
+
+            (a, b) = Sacks[i + 2];
+            set &= a | b;
+
+            int value = BitOperations.TrailingZeroCount(set);
+            sum += value + 1;
         }
 
         return sum.ToString();
