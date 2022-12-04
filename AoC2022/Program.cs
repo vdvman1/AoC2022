@@ -6,7 +6,7 @@ using BenchmarkDotNet.Toolchains.InProcess.NoEmit;
 using System.Text;
 
 #if RELEASE
-BenchmarkRunner.Run<Day03>(ManualConfig.CreateMinimumViable()
+BenchmarkRunner.Run<Day04>(ManualConfig.CreateMinimumViable()
     .AddJob(Job
         .MediumRun
         .WithToolchain(InProcessNoEmitToolchain.Instance)

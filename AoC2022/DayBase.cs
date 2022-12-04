@@ -9,11 +9,11 @@ public abstract class DayBase
     {
         InputFilePath = string.Concat("Inputs/", day, ".txt");
         Day = day;
-        LoadData();
+        ParseData();
     }
 
 
-    public abstract void LoadData();
+    public abstract void ParseData();
 
     public abstract string Solve1();
 
