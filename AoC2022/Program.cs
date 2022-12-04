@@ -8,7 +8,7 @@ using System.Text;
 const bool benchmark = false;
 if (benchmark)
 {
-    BenchmarkRunner.Run<Day03>(ManualConfig.CreateMinimumViable()
+    BenchmarkRunner.Run<Day04>(ManualConfig.CreateMinimumViable()
         .AddJob(Job
             .MediumRun
             .WithToolchain(InProcessNoEmitToolchain.Instance)
