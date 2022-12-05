@@ -1,9 +1,38 @@
-﻿using System.Text;
+﻿using BenchmarkDotNet.Configs;
+using BenchmarkDotNet.Exporters;
+using BenchmarkDotNet.Jobs;
+using BenchmarkDotNet.Running;
+using BenchmarkDotNet.Toolchains.InProcess.NoEmit;
+using System.Collections.ObjectModel;
+using System.Diagnostics;
+using System.Text;
 
 namespace AoC2022;
 
 public partial class Program
 {
+    [Conditional("RELEASE")]
+    private static void BenchmarkLatest()
+    {
+        BenchmarkRunner.Run(DayTypes[^1], ManualConfig.CreateMinimumViable()
+            .AddJob(Job
+                .MediumRun
+                .WithToolchain(InProcessNoEmitToolchain.Instance)
+            )
+        );
+    }
+
+    [Conditional("RELEASE")]
+    private static void BenchmarkAll()
+    {
+        BenchmarkRunner.Run(DayTypes, ManualConfig.CreateMinimumViable()
+            .AddJob(Job
+                .MediumRun
+                .WithToolchain(InProcessNoEmitToolchain.Instance)
+            ).AddExporter(MarkdownExporter.GitHub)
+        );
+    }
+
     public static void Main()
     {
         BenchmarkLatest();
@@ -13,7 +42,7 @@ public partial class Program
         string part2 = "Part 2";
         int sol1MaxLen = part1.Length;
         int sol2MaxLen = part2.Length;
-        var solutions = new List<(string day, string sol1, string sol2)>(Days.Count);
+        var solutions = new List<(string day, string sol1, string sol2)>(Days.Length);
         foreach (var (num, instance) in Days)
         {
             string sol1, sol2;

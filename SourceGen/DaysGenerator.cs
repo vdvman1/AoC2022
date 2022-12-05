@@ -51,42 +51,14 @@ public class DaysGenerator : ISourceGenerator
         var src = $$"""
             namespace AoC2022;
 
-            using System.Collections.ObjectModel;
-            using System.Diagnostics;
-            using BenchmarkDotNet.Configs;
-            using BenchmarkDotNet.Jobs;
-            using BenchmarkDotNet.Running;
-            using BenchmarkDotNet.Toolchains.InProcess.NoEmit;
-            using BenchmarkDotNet.Exporters;
-            
             public partial class Program
             {
-                private static readonly ReadOnlyCollection<(string Num, DayBase Instance)> Days = new(new (string, DayBase)[]
+                private static readonly (string Num, DayBase Instance)[] Days = new (string, DayBase)[]
                 {
                     {{ string.Join(",\n        ", days.Select(pair => $"""("{pair.Key}", new {pair.Value}())""")) }}
-                });
+                };
 
-                [Conditional("RELEASE")]
-                private static void BenchmarkLatest()
-                {
-                    BenchmarkRunner.Run<{{days.Values[days.Count - 1]}}>(ManualConfig.CreateMinimumViable()
-                        .AddJob(Job
-                            .MediumRun
-                            .WithToolchain(InProcessNoEmitToolchain.Instance)
-                        )
-                    );
-                }
-
-                [Conditional("RELEASE")]
-                private static void BenchmarkAll()
-                {
-                    BenchmarkRunner.Run(new[]{{{ string.Join(", ", days.Values.Select(day => $"typeof({day})")) }}}, ManualConfig.CreateMinimumViable()
-                        .AddJob(Job
-                            .MediumRun
-                            .WithToolchain(InProcessNoEmitToolchain.Instance)
-                        ).AddExporter(MarkdownExporter.GitHub)
-                    );
-                }
+                private static readonly Type[] DayTypes = new[]{{{string.Join(", ", days.Values.Select(day => $"typeof({day})"))}}};
             }
             """;
         context.AddSource("Program.g.cs", src);
