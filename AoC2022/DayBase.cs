@@ -2,16 +2,13 @@
 
 public abstract class DayBase
 {
-    public readonly string InputFilePath;
     public readonly string Day;
 
     public DayBase(string day)
     {
-        InputFilePath = string.Concat("Inputs/", day, ".txt");
         Day = day;
         ParseData();
     }
-
 
     public abstract void ParseData();
 
