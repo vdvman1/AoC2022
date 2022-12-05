@@ -41,7 +41,6 @@ public class DaysGenerator : ISourceGenerator
 
                 public partial class {{name}}
                 {
-                    public {{name}}() : base("{{day}}") { }
                     private static ReadOnlySpan<byte> Contents => "{{contents.Replace("\n","\\n")}}"u8;
                 }
                 """;

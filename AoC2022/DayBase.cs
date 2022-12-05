@@ -2,13 +2,7 @@
 
 public abstract class DayBase
 {
-    public readonly string Day;
-
-    public DayBase(string day)
-    {
-        Day = day;
-        ParseData();
-    }
+    public DayBase() => ParseData();
 
     public abstract void ParseData();
 

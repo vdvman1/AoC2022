@@ -3,7 +3,6 @@ using BenchmarkDotNet.Exporters;
 using BenchmarkDotNet.Jobs;
 using BenchmarkDotNet.Running;
 using BenchmarkDotNet.Toolchains.InProcess.NoEmit;
-using System.Collections.ObjectModel;
 using System.Diagnostics;
 using System.Text;
 
