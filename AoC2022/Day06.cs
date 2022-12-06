@@ -17,7 +17,7 @@ public partial class Day06 : DayBase
                 if (chars[i] == chars[j])
                 {
                     start = j + 1;
-                    break;
+                    goto NextStart;
                 }
             }
 
@@ -26,6 +26,7 @@ public partial class Day06 : DayBase
                 return (i + 1).ToString();
             }
 
+            NextStart:
             ++i;
         } while (i < chars.Length);
 
@@ -36,24 +37,32 @@ public partial class Day06 : DayBase
     public override string Solve2()
     {
         ReadOnlySpan<byte> chars = Contents;
+        Span<int> seenIndex = stackalloc int['z' - 'a' + 1];
+        seenIndex.Fill(-1);
+
         int start = 0;
+        seenIndex[chars[0] - 'a'] = 0;
         int i = 1;
         do
         {
-            for (int j = i - 1; j >= start; j--)
+            var idx = chars[i] - 'a';
+            var offset = seenIndex[idx];
+            if (offset >= 0)
             {
-                if (chars[i] == chars[j])
+                while (start <= offset)
                 {
-                    start = j + 1;
-                    break;
+                    seenIndex[chars[start] - 'a'] = -1;
+                    ++start;
                 }
+                //goto NextStart;
             }
-
-            if (i - start == 13)
+            else if (i - start == 13)
             {
                 return (i + 1).ToString();
             }
 
+            //NextStart:
+            seenIndex[idx] = i;
             ++i;
         } while (i < chars.Length);
 
