@@ -226,9 +226,9 @@ public partial class Day07 : DayBase
                 total += dir.Size;
             }
 
-            foreach (Directory child in dir.ChildDirectories)
+            for (int i = 0; i < dir.ChildDirectories.Count; i++)
             {
-                ProcessDir(child);
+                ProcessDir(dir.ChildDirectories[i]);
             }
         }
         ProcessDir(RootDir);
@@ -248,20 +248,28 @@ public partial class Day07 : DayBase
 
         void ProcessDir(Directory dir)
         {
-            foreach (Directory child in dir.ChildDirectories)
-            {
-                ProcessDir(child);
-            }
-
-            if (dir.Size >= spaceNeeded && dir.Size <= minSpaceFreed)
+            if (dir.Size <= minSpaceFreed)
             {
                 minSpaceFreed = dir.Size;
             }
+
+            for (int i = 0; i < dir.ChildDirectories.Count; i++)
+            {
+                Directory child = dir.ChildDirectories[i];
+                if (child.Size >= spaceNeeded)
+                {
+                    ProcessDir(child);
+                }
+            }
         }
 
-        foreach (Directory child in RootDir.ChildDirectories)
+        for (int i = 0; i < RootDir.ChildDirectories.Count; i++)
         {
-            ProcessDir(child);
+            Directory dir = RootDir.ChildDirectories[i];
+            if (dir.Size >= spaceNeeded)
+            {
+                ProcessDir(dir);
+            }
         }
 
         return minSpaceFreed.ToString();
