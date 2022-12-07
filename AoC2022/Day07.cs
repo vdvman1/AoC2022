@@ -1,13 +1,132 @@
-﻿using System.Text;
-
-namespace AoC2022;
+﻿namespace AoC2022;
 
 public partial class Day07 : DayBase
 {
+    private class DirTrie
+    {
+        public Directory? Directory;
+        public ReadOnlyMemory<byte> Prefix;
+        public DirTrie?[]? Trie;
+    }
+
     private class Directory
     {
-        public readonly Dictionary<string, Directory> Directories = new();
+        public DirTrie? Trie = null;
+        public readonly List<Directory> ChildDirectories = new();
         public int Size = 0;
+
+        public Directory VisitDir(ReadOnlySpan<byte> name)
+        {
+            if (Trie is null)
+            {
+                var dir = new Directory();
+                Trie = new()
+                {
+                    Directory = dir,
+                    Prefix = name.ToArray()
+                };
+                ChildDirectories.Add(dir);
+                return dir;
+            }
+
+            ref DirTrie trieRef = ref Trie!;
+
+            do
+            {
+                var trie = trieRef;
+                var prefix = trie.Prefix.Span;
+                int commonLen = 0;
+                do
+                {
+                    if (commonLen == prefix.Length)
+                    {
+                        if (commonLen == name.Length) // prefix == name
+                        {
+                            return trie.Directory!;
+                        }
+
+                        // name.StartsWith(prefix) == true
+                        var c = name[commonLen] - 'a';
+                        name = name[(commonLen + 1)..];
+                        if (trie.Trie is null)
+                        {
+                            trie.Trie = new DirTrie['z' - 'a' + 1];
+                            var dir = new Directory();
+                            trie.Trie[c] = new()
+                            {
+                                Directory = dir,
+                                Prefix = name.Length == 0 ? default(ReadOnlyMemory<byte>) : name.ToArray()
+                            };
+                            ChildDirectories.Add(dir);
+                            return dir;
+                        }
+                        else if (trie.Trie[c] is null)
+                        {
+                            var dir = new Directory();
+                            trie.Trie[c] = new()
+                            {
+                                Directory = dir,
+                                Prefix = name.Length == 0 ? default(ReadOnlyMemory<byte>) : name.ToArray()
+                            };
+                            ChildDirectories.Add(dir);
+                            return dir;
+                        }
+                        else
+                        {
+                            trieRef = ref trie.Trie[c]!;
+                            break;
+                        }
+                    }
+                    else if (commonLen == name.Length) // prefix.StartsWith(name)
+                    {
+                        var dir = new Directory();
+                        ChildDirectories.Add(dir);
+
+                        var arr = new DirTrie['z' - 'a' + 1];
+                        arr[prefix[name.Length] - 'a'] = trie;
+
+                        trie.Prefix = trie.Prefix[(name.Length + 1)..];
+
+                        trieRef = new()
+                        {
+                            Directory = dir,
+                            Prefix = trie.Prefix[..name.Length],
+                            Trie = arr
+                        };
+
+                        return dir;
+                    }
+                    else if (name[commonLen] != prefix[commonLen]) // Shared prefix
+                    {
+                        var commonPrefix = trie.Prefix[..commonLen];
+                        trie.Prefix = trie.Prefix[(commonLen + 1)..];
+
+                        var dir = new Directory();
+                        ChildDirectories.Add(dir);
+
+                        var arr = new DirTrie['z' - 'a' + 1];
+                        arr[prefix[commonLen] - 'a'] = trie;
+                        arr[name[commonLen] - 'a'] = new DirTrie()
+                        {
+                            Directory = dir,
+                            Prefix = name.Length == commonLen + 1 ? default(ReadOnlyMemory<byte>) : name[(commonLen + 1)..].ToArray()
+                        };
+
+                        trieRef = new()
+                        {
+                            Prefix = commonPrefix,
+                            Trie = arr
+                        };
+
+                        return dir;
+                    }
+                    else
+                    {
+                        ++commonLen;
+                    }
+                } while (true);
+            } while (true);
+        }
     }
 
     private Directory RootDir = null!;
@@ -45,15 +164,8 @@ public partial class Day07 : DayBase
                         break;
                     default:
                         var charsToNewline = chars[i..].IndexOf((byte)'\n');
-                        var name = Encoding.ASCII.GetString(chars.Slice(i, charsToNewline));
-                        if (!currentDir.Directories!.TryGetValue(name, out Directory? child))
-                        {
-                            child = new();
-                            currentDir.Directories.Add(name, child);
-                        }
-
                         path.Push(currentDir);
-                        currentDir = child;
+                        currentDir = currentDir.VisitDir(chars.Slice(i, charsToNewline));
                         i += charsToNewline + 1;
                         break;
                 }
@@ -71,11 +183,7 @@ public partial class Day07 : DayBase
                         i += dir.Length;
 
                         var charsToNewline = chars[i..].IndexOf((byte)'\n');
-                        var name = Encoding.ASCII.GetString(chars.Slice(i, charsToNewline));
-                        if (!currentDir.Directories!.ContainsKey(name))
-                        {
-                            currentDir.Directories.Add(name, new());
-                        }
+                        currentDir.VisitDir(chars.Slice(i, charsToNewline));
                         i += charsToNewline + 1;
                     }
                     else
@@ -118,7 +226,7 @@ public partial class Day07 : DayBase
                 total += dir.Size;
             }
 
-            foreach (Directory child in dir.Directories!.Values)
+            foreach (Directory child in dir.ChildDirectories)
             {
                 ProcessDir(child);
             }
@@ -140,7 +248,7 @@ public partial class Day07 : DayBase
 
         void ProcessDir(Directory dir)
         {
-            foreach (Directory child in dir.Directories!.Values)
+            foreach (Directory child in dir.ChildDirectories)
             {
                 ProcessDir(child);
             }
@@ -151,7 +259,7 @@ public partial class Day07 : DayBase
             }
         }
 
-        foreach (Directory child in RootDir.Directories!.Values)
+        foreach (Directory child in RootDir.ChildDirectories)
         {
             ProcessDir(child);
         }
