@@ -54,14 +54,12 @@ public partial class Day06 : DayBase
                     seenIndex[chars[start] - 'a'] = -1;
                     ++start;
                 }
-                //goto NextStart;
             }
             else if (i - start == 13)
             {
                 return (i + 1).ToString();
             }
 
-            //NextStart:
             seenIndex[idx] = i;
             ++i;
         } while (i < chars.Length);
