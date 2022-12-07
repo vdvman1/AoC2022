@@ -4,32 +4,20 @@ namespace AoC2022;
 
 public partial class Day07 : DayBase
 {
-    private class FsEntry
+    private class Directory
     {
-        public readonly Dictionary<string, FsEntry>? Children;
-        public int Size;
-
-        public FsEntry()
-        {
-            Children = new();
-            Size = 0;
-        }
-
-        public FsEntry(int size)
-        {
-            Children = null;
-            Size = size;
-        }
+        public readonly Dictionary<string, Directory> Directories = new();
+        public int Size = 0;
     }
 
-    private FsEntry RootDir = null!;
+    private Directory RootDir = null!;
 
     [Benchmark]
     public override void ParseData()
     {
         ReadOnlySpan<byte> chars = Contents;
-        var root = new FsEntry();
-        var path = new Stack<FsEntry>();
+        var root = new Directory();
+        var path = new Stack<Directory>();
         var currentDir = root;
 
         const string cmdPrefix = "$ ";
@@ -58,10 +46,10 @@ public partial class Day07 : DayBase
                     default:
                         var charsToNewline = chars[i..].IndexOf((byte)'\n');
                         var name = Encoding.ASCII.GetString(chars.Slice(i, charsToNewline));
-                        if (!currentDir.Children!.TryGetValue(name, out FsEntry? child))
+                        if (!currentDir.Directories!.TryGetValue(name, out Directory? child))
                         {
                             child = new();
-                            currentDir.Children.Add(name, child);
+                            currentDir.Directories.Add(name, child);
                         }
 
                         path.Push(currentDir);
@@ -84,9 +72,9 @@ public partial class Day07 : DayBase
 
                         var charsToNewline = chars[i..].IndexOf((byte)'\n');
                         var name = Encoding.ASCII.GetString(chars.Slice(i, charsToNewline));
-                        if (!currentDir.Children!.ContainsKey(name))
+                        if (!currentDir.Directories!.ContainsKey(name))
                         {
-                            currentDir.Children.Add(name, new());
+                            currentDir.Directories.Add(name, new());
                         }
                         i += charsToNewline + 1;
                     }
@@ -96,16 +84,14 @@ public partial class Day07 : DayBase
                         ++i;
                         while (chars[i] != ' ')
                         {
-                            size = 10*size + chars[i] - '0';
+                            size = 10 * size + chars[i] - '0';
                             ++i;
                         }
 
                         ++i;
                         var charsToNewline = chars[i..].IndexOf((byte)'\n');
-                        var name = Encoding.ASCII.GetString(chars.Slice(i, charsToNewline));
-                        currentDir.Children!.Add(name, new(size));
                         currentDir.Size += size;
-                        foreach (FsEntry dir in path)
+                        foreach (Directory dir in path)
                         {
                             dir.Size += size;
                         }
@@ -125,19 +111,16 @@ public partial class Day07 : DayBase
     {
         int total = 0;
 
-        void ProcessDir(FsEntry dir)
+        void ProcessDir(Directory dir)
         {
             if (dir.Size <= 100000)
             {
                 total += dir.Size;
             }
 
-            foreach (FsEntry child in dir.Children!.Values)
+            foreach (Directory child in dir.Directories!.Values)
             {
-                if (child.Children is not null)
-                {
-                    ProcessDir(child);
-                }
+                ProcessDir(child);
             }
         }
         ProcessDir(RootDir);
@@ -155,14 +138,11 @@ public partial class Day07 : DayBase
         int spaceNeeded = DesiredSpace - spaceAvailable;
         int minSpaceFreed = RootDir.Size;
 
-        void ProcessDir(FsEntry dir)
+        void ProcessDir(Directory dir)
         {
-            foreach (FsEntry child in dir.Children!.Values)
+            foreach (Directory child in dir.Directories!.Values)
             {
-                if (child.Children is not null)
-                {
-                    ProcessDir(child);
-                }
+                ProcessDir(child);
             }
 
             if (dir.Size >= spaceNeeded && dir.Size <= minSpaceFreed)
@@ -171,12 +151,9 @@ public partial class Day07 : DayBase
             }
         }
 
-        foreach (FsEntry child in RootDir.Children!.Values)
+        foreach (Directory child in RootDir.Directories!.Values)
         {
-            if (child.Children is not null)
-            {
-                ProcessDir(child);
-            }
+            ProcessDir(child);
         }
 
         return minSpaceFreed.ToString();
