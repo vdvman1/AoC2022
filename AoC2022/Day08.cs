@@ -49,7 +49,7 @@ namespace AoC2022
                         continue;
                     }
 
-                    int height = Grid[rowStart + col];
+                    var height = Grid[rowStart + col];
                     bool visible = true;
                     for (int i = 0; i < col; i++)
                     {
@@ -120,7 +120,60 @@ namespace AoC2022
 
         public override string Solve2()
         {
-            throw new NotImplementedException();
+            int maxScenicScore = 0;
+
+            for (int row = 1; row < Rows - 1; row++) // First and last row have scores of 0 because they are on the edge
+            {
+                int rowStart = row * Columns;
+                for (int col = 1; col < Columns - 1; col++) // First and last column have scores of 0 because they are on the edge
+                {
+                    var height = Grid[rowStart + col];
+
+                    int scenicScoreL = 0;
+                    for (int i = col - 1; i >= 0; i--)
+                    {
+                        ++scenicScoreL;
+                        if (height <= Grid[rowStart + i])
+                        {
+                            break;
+                        }
+                    }
+
+                    int scenicScoreR = 0;
+                    for (int i = col + 1; i < Columns; ++i)
+                    {
+                        ++scenicScoreR;
+                        if (height <= Grid[rowStart + i])
+                        {
+                            break;
+                        }
+                    }
+
+                    int scenicScoreU = 0;
+                    for (int i = row - 1; i >= 0; i--)
+                    {
+                        ++scenicScoreU;
+                        if (height <= Grid[i*Columns + col])
+                        {
+                            break;
+                        }
+                    }
+
+                    int scenicScoreD = 0;
+                    for (int i = row + 1; i < Rows; ++i)
+                    {
+                        ++scenicScoreD;
+                        if (height <= Grid[i * Columns + col])
+                        {
+                            break;
+                        }
+                    }
+
+                    maxScenicScore = Math.Max(maxScenicScore, scenicScoreL*scenicScoreR*scenicScoreU*scenicScoreD);
+                }
+            }
+
+            return maxScenicScore.ToString();
         }
     }
 }
